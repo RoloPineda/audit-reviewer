@@ -31,6 +31,7 @@ from pathlib import Path
 import pymupdf
 
 REQUIRED_SECTIONS = {"PURPOSE", "POLICY", "PROCEDURE"}
+MIN_BODY_FONT_SIZE = 10.5
 
 
 def find_bold_headers(pdf_path: str) -> set[str]:
@@ -57,7 +58,7 @@ def find_bold_headers(pdf_path: str) -> set[str]:
                 for span in line["spans"]:
                     text = span["text"].strip()
                     is_bold = "Bold" in span["font"]
-                    is_body_size = span["size"] > 10.5
+                    is_body_size = span["size"] > MIN_BODY_FONT_SIZE
 
                     if is_bold and is_body_size and text in REQUIRED_SECTIONS:
                         headers.add(text)
