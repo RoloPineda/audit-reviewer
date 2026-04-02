@@ -11,8 +11,8 @@ Outputs:
     data/processed/chroma/  - ChromaDB persistent storage
 
 Usage:
-    uv run scripts/preprocess.py data/policies data/processed --dry-run
-    uv run scripts/preprocess.py data/policies data/processed
+    uv run scripts/preprocess.py data/policies_procedures data/processed --dry-run
+    uv run scripts/preprocess.py data/policies_procedures data/processed
 """
 
 import json
