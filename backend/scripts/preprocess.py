@@ -23,8 +23,8 @@ import time
 from pathlib import Path
 
 import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
 import pymupdf
+from chromadb.utils import embedding_functions
 
 REQUIRED_SECTIONS = {"PURPOSE", "POLICY", "PROCEDURE"}
 SKIP_SECTIONS = {
@@ -377,9 +377,9 @@ def find_new_chunk_ids(
     new_indices = [i for i, cid in enumerate(chunk_ids) if cid not in existing_ids]
 
     if existing_ids:
-        print(
-            f"\n{len(existing_ids)} chunks already stored, {len(new_indices)} new to embed."
-        )
+        stored = len(existing_ids)
+        new = len(new_indices)
+        print(f"\n{stored} chunks already stored, {new} new to embed.")
     else:
         print(f"\n{len(new_indices)} chunks to embed.")
 
@@ -436,7 +436,7 @@ def store_chunks(
         )
 
 
-def _upsert_batch_with_retry(
+def _upsert_batch_with_retry(  # noqa: PLR0913
     collection: chromadb.Collection,
     ids: list[str],
     documents: list[str],
@@ -468,7 +468,8 @@ def _upsert_batch_with_retry(
 
             if is_rate_limit:
                 print(
-                    f"    Rate limited. Waiting {wait}s (attempt {attempt}/{max_retries})..."
+                    f"    Rate limited. Waiting {wait}s"
+                    f" (attempt {attempt}/{max_retries})..."
                 )
             else:
                 print(f"    Error: {e} (attempt {attempt}/{max_retries})")
@@ -506,7 +507,7 @@ def preprocess(policies_dir: str, output_dir: str, dry_run: bool = False) -> Non
 
     if dry_run:
         chunks_path = output_path / "chunks_preview.json"
-        with open(chunks_path, "w") as f:
+        with chunks_path.open("w") as f:
             json.dump(all_chunks, f, indent=2)
         print(f"\nSaved preview to {chunks_path}")
         print("Dry run complete. Inspect chunks before running without --dry-run.")
@@ -549,7 +550,8 @@ if __name__ == "__main__":
 
     if len(args) < 2:
         print(
-            "Usage: uv run scripts/preprocess.py <policies_dir> <output_dir> [--dry-run]"
+            "Usage: uv run scripts/preprocess.py"
+            " <policies_dir> <output_dir> [--dry-run]"
         )
         sys.exit(1)
 

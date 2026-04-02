@@ -38,9 +38,7 @@ QUESTION_SPLIT_PATTERN = re.compile(r"(?=(?<!\d)\d{1,3}\.\s*Does\s)")
 
 # Captures the APL reference inside parentheses at the end of a line,
 # e.g. "(Reference: APL 25-008, page 2)"
-REFERENCE_PATTERN = re.compile(
-    r"\(Reference:\s*(.+?)\)\s*$", re.MULTILINE
-)
+REFERENCE_PATTERN = re.compile(r"\(Reference:\s*(.+?)\)\s*$", re.MULTILINE)
 
 # Captures the APL title after "SUBMISSION ITEM:" in the form header,
 # e.g. "Policy and Procedure (P&P) regarding All Plan Letter (APL) 25-008: ..."
@@ -52,9 +50,7 @@ SUBMISSION_ITEM_PATTERN = re.compile(
 # Strips the Yes/No answer options and Citation field that appear after each
 # question's text. Used as a fallback to isolate the question body when no
 # "(Reference: ...)" line is found
-TRAILING_NOISE_PATTERN = re.compile(
-    r"\s*(Yes|No|Citation:).*$", re.DOTALL
-)
+TRAILING_NOISE_PATTERN = re.compile(r"\s*(Yes|No|Citation:).*$", re.DOTALL)
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
@@ -136,13 +132,13 @@ def parse_single_question(raw_block: str) -> dict | None:
         return None
 
     number = int(number_match.group(1))
-    body = raw_block[number_match.end():]
+    body = raw_block[number_match.end() :]
 
     ref_match = REFERENCE_PATTERN.search(body)
     reference = ref_match.group(1).strip() if ref_match else ""
 
     if ref_match:
-        question_text = body[:ref_match.start()]
+        question_text = body[: ref_match.start()]
     else:
         question_text = TRAILING_NOISE_PATTERN.sub("", body)
 
@@ -178,7 +174,7 @@ def extract_questions(pdf_path: str) -> dict:
     if not questions_start:
         return {"metadata": metadata, "questions": []}
 
-    questions_text = text[questions_start.start():]
+    questions_text = text[questions_start.start() :]
     raw_blocks = QUESTION_SPLIT_PATTERN.split(questions_text)
     raw_blocks = [b for b in raw_blocks if b.strip()]
 

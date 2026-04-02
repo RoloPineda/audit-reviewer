@@ -145,13 +145,13 @@ class TestBuildChunksFromSpans:
             _span("Second subsection text.", page=1),
         ]
         result = _build_chunks_from_spans(spans)
-        assert len(result) == 2  # noqa: PLR2004
+        assert len(result) == 2
         assert result[0]["section"] == "PURPOSE"
         assert result[0]["subsection"] == "A"
         assert result[0]["text"] == "First subsection text."
         assert result[0]["page"] == 1
         assert result[1]["subsection"] == "B"
-        assert result[1]["page"] == 2  # noqa: PLR2004
+        assert result[1]["page"] == 2
 
     def test_multiple_sections(self):
         spans = [
@@ -163,7 +163,7 @@ class TestBuildChunksFromSpans:
             _span("Policy text.", page=1),
         ]
         result = _build_chunks_from_spans(spans)
-        assert len(result) == 2  # noqa: PLR2004
+        assert len(result) == 2
         assert result[0]["section"] == "PURPOSE"
         assert result[1]["section"] == "POLICY"
 
@@ -188,10 +188,8 @@ class TestBuildChunksFromSpans:
             _span("Subsection content.", page=0),
         ]
         result = _build_chunks_from_spans(spans)
-        assert len(result) == 2  # noqa: PLR2004
-        intro = next(
-            c for c in result if c["subsection"] == "_intro"
-        )
+        assert len(result) == 2
+        intro = next(c for c in result if c["subsection"] == "_intro")
         assert intro["text"] == "Intro text before any letter."
 
     def test_roman_numerals_are_skipped(self):
@@ -240,4 +238,4 @@ class TestBuildChunksFromSpans:
         result = _build_chunks_from_spans(spans)
         assert len(result) == 1
         assert result[0]["text"] == "Start of text. Continued on next page."
-        assert result[0]["page"] == 3  # noqa: PLR2004
+        assert result[0]["page"] == 3
