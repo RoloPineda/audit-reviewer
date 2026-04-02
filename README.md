@@ -97,7 +97,7 @@ npm run dev
 
 **Per-question evaluation over batch.** Each question is a separate API call. Avoids timeout issues on free-tier hosting, gives the user incremental progress, and simplifies error handling.
 
-## Stretch: What Would Make This a Functional Application
+## Future Improvements
 
 ### Policy Selection
 
@@ -105,11 +105,11 @@ The app currently searches all 5,458 chunks for every question. A production ver
 
 ### Workflow and State
 
-Auditors don't finish 64 questions in one sitting. A functional app needs persistent sessions: save progress, resume later, track which questions have been reviewed. Each question should support an auditor override (change the AI's determination) and manual notes. The AI assessment is a starting point, not a final answer.
+Auditors don't finish 64 questions in one sitting. A functional app needs persistent sessions: save progress, resume later, track which questions have been reviewed. Each question should support an auditor override (change the AI's determination) and manual notes.
 
 ### Export
 
-The end product of an audit is the filled-out DHCS Submission Review Form with Yes/No answers and citations. The app should generate a PDF or Excel matching the original form format so the auditor can submit it directly. This is the difference between a tool the auditor uses and a demo they look at.
+The end product of an audit is the filled-out DHCS Submission Review Form with Yes/No answers and citations. The app should generate a PDF or Excel matching the original form format so the auditor can submit it directly.
 
 
 ### Confidence and Transparency

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -6,7 +6,6 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
-import { useState } from "react";
 import { Provider, defaultTheme } from "@adobe/react-spectrum";
 import { ToastContainer, ToastQueue } from "@react-spectrum/toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";

@@ -46,11 +46,11 @@ function StackedSummaryBar({ questions }) {
   for (const q of questions) {
     const s = q.status || "pending";
     if (s in counts) {
-      counts[s]++;
+      counts[s] += 1;
     } else if (s === "pending") {
-      counts.pending++;
+      counts.pending += 1;
     } else {
-      counts.not_met++;
+      counts.not_met += 1;
     }
   }
 
@@ -92,7 +92,7 @@ function QuestionCard({ question, onEvaluate, isEvaluating }) {
   const needsTruncation = question.text.length > 200;
   const displayText =
     needsTruncation && !textExpanded
-      ? question.text.slice(0, 200) + "..."
+      ? `${question.text.slice(0, 200)}...`
       : question.text;
 
   return (
@@ -192,7 +192,6 @@ export default function ResultsPage({ data, onError, onLogout }) {
     data.questions.map((q) => ({ ...q, status: "pending", evidence: null, citation: null }))
   );
   const [isEvaluatingAll, setIsEvaluatingAll] = useState(false);
-  const [evaluatingIndex, setEvaluatingIndex] = useState(null);
   const [evaluatingQuestionNum, setEvaluatingQuestionNum] = useState(null);
   const cancelRef = useRef(false);
   const questionsRef = useRef(questions);
@@ -240,7 +239,7 @@ export default function ResultsPage({ data, onError, onLogout }) {
       const currentStatus = questionsRef.current[i].status;
       if (currentStatus && currentStatus !== "pending") continue;
 
-      setEvaluatingIndex(i);
+
       setEvaluatingQuestionNum(questions[i].number);
 
       try {
@@ -258,7 +257,7 @@ export default function ResultsPage({ data, onError, onLogout }) {
     }
 
     setIsEvaluatingAll(false);
-    setEvaluatingIndex(null);
+
     setEvaluatingQuestionNum(null);
   }
 

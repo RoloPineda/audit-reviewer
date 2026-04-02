@@ -81,9 +81,17 @@ export default function UploadPage({ onUploadComplete, onError }) {
       <Heading level={2}>Upload Audit Questionnaire</Heading>
 
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Drop zone for PDF upload"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            fileInputRef.current?.click();
+          }
+        }}
         style={{
           padding: 48,
           borderRadius: 8,
