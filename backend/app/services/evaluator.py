@@ -4,8 +4,8 @@ For each audit question, retrieves the most relevant policy chunks from
 ChromaDB using vector similarity search, then asks an LLM to determine
 whether the requirement is met based on the retrieved evidence.
 
-The LLM returns a structured assessment: met/not_met/partially_met,
-the specific evidence passage, and the source citation.
+The LLM returns a binary assessment matching the DHCS audit form's
+Yes/No format: met or not_met, with evidence and citation.
 
 Usage:
     from app.services.evaluator import Evaluator
@@ -15,7 +15,7 @@ Usage:
         "Does the P&P state MCPs must not deny hospice care to Members "
         "certified as terminally ill?"
     )
-    result["status"]    # "met", "not_met", or "partially_met"
+    result["status"]    # "met" or "not_met"
     result["evidence"]  # the specific policy passage
     result["citation"]  # e.g. "GG.1503, POLICY.B, page 2"
 """
@@ -38,8 +38,10 @@ You are a healthcare compliance auditor. You will be given an audit \
 question and a set of policy document excerpts. Your task is to determine \
 whether the policy documents satisfy the requirement stated in the question.
 
+The audit form requires a binary Yes/No determination.
+
 Respond with a JSON object containing exactly these fields:
-- "status": one of "met", "not_met", or "partially_met"
+- "status": either "met" (Yes) or "not_met" (No)
 - "evidence": the specific passage from the policy that addresses the \
 requirement. Quote the relevant text directly. If not met, explain what \
 is missing.
@@ -49,11 +51,18 @@ is missing.
 Rules:
 - Only use the provided policy excerpts as evidence. Do not infer or \
 assume policy content.
-- "met" means the policy explicitly addresses all parts of the requirement.
-- "partially_met" means the policy addresses some but not all parts.
-- "not_met" means none of the provided excerpts address the requirement.
-- Be precise. If the question asks about multiple sub-requirements, \
-evaluate each one.
+- "met" means the policy substantively addresses the requirement. It does \
+not need to use identical wording, but must cover the intent.
+- "not_met" means the provided excerpts do not address the requirement.
+- Focus on the substantive requirements in the question, not contextual \
+framing. Phrases like "under existing Contract requirements and state law" \
+or "as described in federal law" are legal context, not separate \
+requirements the policy must restate.
+- Affirmative policy language can satisfy prohibitive requirements. \
+For example, "shall ensure provision of hospice care" satisfies \
+"must not deny hospice care."
+- If the question asks about multiple substantive sub-requirements, the \
+requirement is only "met" if the key sub-requirements are addressed.
 
 Respond with valid JSON only. No other text."""
 
@@ -196,7 +205,7 @@ class Evaluator:
 
         Returns:
             A dict with keys: status, evidence, citation, chunks_used.
-            chunks_used contains the metadatas of retrieved chunks for
+            chunks_used contains the metadata of retrieved chunks for
             transparency. On LLM failure, status is "error".
         """
         results = self.retrieve(question)
