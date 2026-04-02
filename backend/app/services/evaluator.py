@@ -72,14 +72,14 @@ def _format_excerpts(results: dict) -> str:
     so the LLM can reference them in citations.
 
     Args:
-        results: ChromaDB query results dict with ids, documents, metadata.
+        results: ChromaDB query results dict with ids, documents, metadatas.
 
     Returns:
         A formatted string of labeled policy excerpts.
     """
     parts = []
     for i in range(len(results["ids"][0])):
-        meta = results["metadata"][0][i]
+        meta = results["metadatas"][0][i]
         doc = results["documents"][0][i]
         label = (
             f"[{meta['policy_number']}, "
@@ -170,7 +170,7 @@ class Evaluator:
             question: The audit question text.
 
         Returns:
-            ChromaDB query results with ids, documents, metadata, distances.
+            ChromaDB query results with ids, documents, metadatas, distances.
 
         Raises:
             RuntimeError: If the retrieval fails.
@@ -196,7 +196,7 @@ class Evaluator:
 
         Returns:
             A dict with keys: status, evidence, citation, chunks_used.
-            chunks_used contains the metadata of retrieved chunks for
+            chunks_used contains the metadatas of retrieved chunks for
             transparency. On LLM failure, status is "error".
         """
         results = self.retrieve(question)
@@ -223,7 +223,7 @@ class Evaluator:
                 "status": "error",
                 "evidence": "Rate limit exceeded. Try again shortly.",
                 "citation": "",
-                "chunks_used": results["metadata"][0],
+                "chunks_used": results["metadatas"][0],
             }
         except anthropic.APITimeoutError:
             logger.warning("Anthropic timeout for question: %s", question[:80])
@@ -231,7 +231,7 @@ class Evaluator:
                 "status": "error",
                 "evidence": "LLM request timed out. Try again.",
                 "citation": "",
-                "chunks_used": results["metadata"][0],
+                "chunks_used": results["metadatas"][0],
             }
         except anthropic.APIError as e:
             logger.exception("Anthropic API error: %s", e)
@@ -239,7 +239,7 @@ class Evaluator:
                 "status": "error",
                 "evidence": f"LLM error: {e}",
                 "citation": "",
-                "chunks_used": results["metadata"][0],
+                "chunks_used": results["metadatas"][0],
             }
 
         response_text = message.content[0].text
@@ -257,7 +257,7 @@ class Evaluator:
                 "citation": "",
             }
 
-        parsed["chunks_used"] = results["metadata"][0]
+        parsed["chunks_used"] = results["metadatas"][0]
         return parsed
 
     def evaluate_all(self, questions: list[dict]) -> list[dict]:
