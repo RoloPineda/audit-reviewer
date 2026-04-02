@@ -1,0 +1,16 @@
+.venv/
+.env
+.git/
+.gitignore
+__pycache__/
+*.pyc
+
+data/policies/
+data/questionnaire/
+data/processed/chunks_preview.json
+
+scripts/
+tests/
+
+.ruff_cache/
+.pytest_cache/
