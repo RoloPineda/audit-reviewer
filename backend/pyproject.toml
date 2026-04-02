@@ -1,0 +1,64 @@
+[project]
+name = "readily-takehome"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=0.88.0",
+    "chroma>=0.2.0",
+    "chromadb>=1.5.5",
+    "db>=0.1.1",
+    "pymupdf>=1.27.2.2",
+    "voyageai>=0.3.7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.11.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "F",      # pyflakes
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "RUF",    # ruff-specific rules
+    "PTH",    # flake8-use-pathlib
+    "RET",    # flake8-return
+    "PIE",    # flake8-pie
+    "PL",     # pylint
+    "PERF",   # perflint
+    "FURB",   # refurb
+    "FLY",    # flynt
+    "T20",    # flake8-print (catch stray prints)
+]
+ignore = [
+    "T201",   # allow print() in scripts
+    "RET504", # naming variables before return aids readability
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["PLR2004"]
+"**/scripts/**" = ["PLR2004"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "scripts"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "scripts"]

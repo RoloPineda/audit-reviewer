@@ -1,10 +1,5 @@
 """Tests for the preprocessing pipeline's pure logic functions."""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from scripts.preprocess import (
     _build_chunks_from_spans,
     _extract_title,
