@@ -21,11 +21,17 @@ Usage:
 """
 
 import json
+import logging
 import os
 
 import anthropic
 import chromadb
 from chromadb.utils import embedding_functions
+
+logger = logging.getLogger(__name__)
+
+LLM_TIMEOUT = 30.0
+LLM_MAX_RETRIES = 3
 
 SYSTEM_PROMPT = """\
 You are a healthcare compliance auditor. You will be given an audit \
@@ -121,6 +127,10 @@ class Evaluator:
             chroma_path: Path to the ChromaDB persistent storage directory.
             model: Anthropic model ID to use for evaluation.
             n_results: Number of chunks to retrieve per question.
+
+        Raises:
+            ValueError: If VOYAGE_API_KEY is not set.
+            RuntimeError: If ChromaDB collection cannot be loaded.
         """
         voyage_key = os.environ.get("VOYAGE_API_KEY")
         if not voyage_key:
@@ -131,12 +141,25 @@ class Evaluator:
             model_name="voyage-law-2",
         )
 
-        client = chromadb.PersistentClient(path=chroma_path)
-        self.collection = client.get_collection(
-            name="policy_chunks",
-            embedding_function=voyage_ef,
+        try:
+            client = chromadb.PersistentClient(path=chroma_path)
+            self.collection = client.get_collection(
+                name="policy_chunks",
+                embedding_function=voyage_ef,
+            )
+            logger.info(
+                "Loaded ChromaDB collection with %d chunks",
+                self.collection.count(),
+            )
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to load ChromaDB from {chroma_path}: {e}"
+            ) from e
+
+        self.anthropic = anthropic.Anthropic(
+            timeout=LLM_TIMEOUT,
+            max_retries=LLM_MAX_RETRIES,
         )
-        self.anthropic = anthropic.Anthropic()
         self.model = model
         self.n_results = n_results
 
@@ -148,17 +171,25 @@ class Evaluator:
 
         Returns:
             ChromaDB query results with ids, documents, metadata, distances.
+
+        Raises:
+            RuntimeError: If the retrieval fails.
         """
-        return self.collection.query(
-            query_texts=[question],
-            n_results=self.n_results,
-        )
+        try:
+            return self.collection.query(
+                query_texts=[question],
+                n_results=self.n_results,
+            )
+        except Exception as e:
+            logger.exception("Retrieval failed for question: %s", question[:80])
+            raise RuntimeError(f"Retrieval failed: {e}") from e
 
     def evaluate_question(self, question: str) -> dict:
         """Evaluate whether a single audit question is met by the policies.
 
         Retrieves relevant policy chunks, sends them with the question
-        to the LLM, and parses the structured response.
+        to the LLM, and parses the structured response. Handles LLM
+        errors gracefully by returning an error status.
 
         Args:
             question: The audit question text.
@@ -166,31 +197,60 @@ class Evaluator:
         Returns:
             A dict with keys: status, evidence, citation, chunks_used.
             chunks_used contains the metadata of retrieved chunks for
-            transparency.
+            transparency. On LLM failure, status is "error".
         """
         results = self.retrieve(question)
         excerpts = _format_excerpts(results)
 
-        message = self.anthropic.messages.create(
-            model=self.model,
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[
-                {
-                    "role": "user",
-                    "content": QUESTION_TEMPLATE.format(
-                        question=question,
-                        excerpts=excerpts,
-                    ),
-                },
-            ],
-        )
+        try:
+            message = self.anthropic.messages.create(
+                model=self.model,
+                max_tokens=1024,
+                system=SYSTEM_PROMPT,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": QUESTION_TEMPLATE.format(
+                            question=question,
+                            excerpts=excerpts,
+                        ),
+                    },
+                ],
+            )
+        except anthropic.RateLimitError:
+            logger.warning("Anthropic rate limit hit for question: %s", question[:80])
+            return {
+                "status": "error",
+                "evidence": "Rate limit exceeded. Try again shortly.",
+                "citation": "",
+                "chunks_used": results["metadata"][0],
+            }
+        except anthropic.APITimeoutError:
+            logger.warning("Anthropic timeout for question: %s", question[:80])
+            return {
+                "status": "error",
+                "evidence": "LLM request timed out. Try again.",
+                "citation": "",
+                "chunks_used": results["metadata"][0],
+            }
+        except anthropic.APIError as e:
+            logger.exception("Anthropic API error: %s", e)
+            return {
+                "status": "error",
+                "evidence": f"LLM error: {e}",
+                "citation": "",
+                "chunks_used": results["metadata"][0],
+            }
 
         response_text = message.content[0].text
+        logger.debug("LLM response for question: %s", response_text[:200])
 
         try:
             parsed = _parse_llm_response(response_text)
         except (json.JSONDecodeError, KeyError):
+            logger.warning(
+                "Failed to parse LLM response: %s", response_text[:200]
+            )
             parsed = {
                 "status": "error",
                 "evidence": response_text,
@@ -212,7 +272,7 @@ class Evaluator:
         """
         results = []
         for q in questions:
-            print(f"  Evaluating Q{q['number']}...")
+            logger.info("Evaluating Q%d...", q["number"])
             evaluation = self.evaluate_question(q["text"])
             results.append({
                 "number": q["number"],
