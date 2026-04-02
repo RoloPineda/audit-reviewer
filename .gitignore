@@ -244,3 +244,4 @@ cython_debug/
 /backend/data/processed/chunks_preview.json
 /backend/data/policies_procedures/
 /backend/data/questionnaire/
+/frontend/.env
